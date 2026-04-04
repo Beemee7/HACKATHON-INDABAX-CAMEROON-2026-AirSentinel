@@ -1,0 +1,11 @@
+# Notebooks
+.ipynb_checkpoints/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Fichiers Python
+__pycache__/
+*.pyc
+
