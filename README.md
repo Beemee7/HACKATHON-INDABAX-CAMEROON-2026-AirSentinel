@@ -151,12 +151,15 @@ Le dashboard Plotly Dash (multi-pages) inclut :
 ## 📂 Structure du projet
 
 ```
-aircam-ai/
+HACKATHON-INDABAX-CAMEROON-2026-AirSentinel/
 │
 ├── data/
 │   ├── Dataset_complet_Meteo.csv       # Météo journalière 40 villes
-│   └── donnes_qualite_air_journalier/  # PM2.5 CAMS (GEE exports)
+│   └── donnes_qualite_air_journalier/  # PM2.5 CAMS (Google Earth Engine)
 │
+├── notebooks/
+│   └── IndabaX_Modelisation_github.ipynb  # Pipeline ML
+
 ├── notebooks/
 │   └── IndabaX_Modelisation.ipynb      # Pipeline ML complet
 │
