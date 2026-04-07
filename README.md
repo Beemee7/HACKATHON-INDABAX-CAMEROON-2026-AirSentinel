@@ -18,160 +18,158 @@ Pour ouvrir le notebook de la modélisation, cliquer ici :
 
 ## 📌 Présentation
 
-**AirCam** est un système de prédiction de la qualité de l'air pour **40 villes camerounaises** couvrant les 10 régions administratives du pays. Le projet combine des données météorologiques quotidiennes, de l'ingénierie de features avancée et des modèles de machine learning pour produire des prévisions **multi-cibles** sur 5 polluants atmosphériques simultanément : **PM2.5, NO₂, O₃, SO₂ et CO**.
+**AirSentinel** est un système de prédiction de la qualité de l'air pour **40 villes camerounaises** couvrant les 10 régions administratives du pays. Le projet combine des données météorologiques quotidiennes (Open‑Meteo / ERA5), de l’ingénierie de features avancée et des modèles de machine learning pour produire des prévisions **multi‑cibles** simultanées sur 5 polluants atmosphériques : **PM2.5, NO₂, O₃, SO₂ et CO**.
 
-Le Cameroun ne dispose pas d'un réseau dense de stations de mesure de la qualité de l'air. Ce projet propose une approche basée sur des **données satellitaires (CAMS / Copernicus)** et des **prévisions météo open-source (Open-Meteo)** pour combler ce vide et informer les populations et décideurs sur les risques de pollution.
+Le Cameroun ne dispose pas d’un réseau dense de stations de mesure. Ce projet comble ce vide en utilisant des **données satellitaires (CAMS reanalysis via Google Earth Engine)** et des **prévisions météo open‑source** pour informer les populations et les décideurs sur les risques de pollution.
 
-> ⚠️ **PM2.5 reste le polluant le plus préoccupant** : 73,9 % des jours dépassent le seuil OMS (15 µg/m³), avec des pics atteignant 383 µg/m³ lors d'épisodes d'harmattan et de feux de brousse.
+> ⚠️ **PM2.5 reste le polluant le plus préoccupant** : moyenne nationale de 31 µg/m³, 73,9 % des jours dépassent le seuil OMS (15 µg/m³), avec des pics atteignant 383 µg/m³ lors d’épisodes d’harmattan et de feux de brousse.
 
 ---
 
 ## 📊 Données
 
-| Source | Description | Période |
-|--------|-------------|---------|
-| [Open-Meteo](https://open-meteo.com) / ERA5 | Variables météo journalières (température, vent, pluie, rayonnement…) | 2020–2025 |
-| [Google Earth Engine](https://earthengine.google.com) — CAMS EAC4 | PM2.5, NO₂, O₃, SO₂, CO journaliers par ville (réanalyse Copernicus) | 2020–2025 |
-| [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) | Qualité de l'air temps réel + prévisions (production) | Aujourd'hui → J+7 |
+| Source                          | Description                                      | Période       |
+|---------------------------------|--------------------------------------------------|---------------|
+| Open‑Meteo / ERA5               | Variables météo journalières (température, vent, pluie, rayonnement…) | 2020–2025 |
+| Google Earth Engine — CAMS EAC4 | PM2.5, NO₂, O₃, SO₂, CO journaliers par ville   | 2020–2025 |
+| Open‑Meteo Air Quality API      | Qualité de l’air temps réel + prévisions         | Aujourd’hui → J+7 |
 
-- **40 villes** · 4 par région · 10 régions administratives
-- **~87 200 observations** journalières
-- **Période** : 1er janvier 2020 → décembre 2025
+- **40 villes** · 4 par région · 10 régions administratives  
+- **87 200 observations** journalières  
+- **Période** : 1er janvier 2020 → 19 décembre 2025
 
 ### Variables cibles
+| Polluant | Unité cible | Conversion appliquée          | Observations clés |
+|----------|-------------|-------------------------------|-------------------|
+| **PM2.5** | µg/m³      | Aucune                        | Moyenne 31 µg/m³ · max 383 µg/m³ · 73,9 % > OMS |
+| **NO₂**   | µg/m³      | kg/m³ → µg/m³ (×10⁹)          | Faible · Yaoundé outlier |
+| **O₃**    | µg/m³      | kg/m³ → µg/m³ (×10⁹)          | Gradient Nord > Sud |
+| **SO₂**   | µg/m³      | kg/m³ → µg/m³ (×10⁹)          | Limbe outlier (volcan + SONARA) |
+| **CO**    | µg/m³      | kg/m³ → µg/m³ (×10⁹)          | Dans les normes · combustion domestique |
 
-| Polluant | Unité | Conversion | Observations clés |
-|----------|-------|------------|-------------------|
-| **PM2.5** | µg/m³ | — | Moyenne 31 µg/m³ · max 383 µg/m³ · 73,9 % des jours > seuil OMS |
-| **NO₂** | µg/m³ | kg/m³ × 10⁹ | Faible globalement · Yaoundé outlier (~1,46 µg/m³) |
-| **O₃** | µg/m³ | kg/m³ × 10⁹ | Modéré · gradient inversé (Nord > Sud) · sous seuil OMS |
-| **SO₂** | µg/m³ | kg/m³ × 10⁹ | Très faible · Limbe outlier (volcan + SONARA) |
-| **CO** | µg/m³ | kg/m³ × 10⁹ | Dans les normes · combustion domestique diffuse |
+**Transformations logarithmiques** appliquées avant modélisation :
+- PM2.5 → `log(1 + valeur)`
+- NO₂, O₃, SO₂, CO → `log(valeur)`
 
 ---
 
 ## 🔍 Analyse Exploratoire — Points Clés
 
-- **Gradient Nord–Sud pour PM2.5** : Kousseri (~44 µg/m³) vs Kribi (~21 µg/m³) — influence déterminante de l'harmattan
-- **Saisonnalité marquée** : pic en saison sèche (feux + harmattan), creux en saison des pluies (lessivage atmosphérique)
-- **Mémoire longue** : autocorrélation lag-1 de 0,73 à 0,93 selon le polluant — la pollution de la veille domine le signal
-- **Distributions log-normales** : transformation logarithmique appliquée à tous les polluants avant modélisation
-- **Aucune valeur manquante** dans le dataset fusionné — aucune imputation nécessaire
-- **Outliers conservés** : ils correspondent à des épisodes de pollution réels (harmattan, éruptions, feux de brousse)
+- **Aucune valeur manquante** dans le dataset fusionné.
+- **Gradient Nord–Sud très marqué** pour PM2.5 (Kousseri ~44 µg/m³ vs Kribi ~21 µg/m³).
+- **Saisonnalité forte** : pic en saison sèche (harmattan + feux), creux en saison des pluies.
+- **Distributions log‑normales** → transformation log justifiée.
+- **Outliers conservés** (événements réels : harmattan, feux de brousse, éruptions).
+- **Stationnarité** : 4 polluants sur 5 stationnaires selon ADF + KPSS ; PM2.5 trend‑stationary.
+- **Corrélation** : lag‑1 très élevé (0,73–0,93) → persistance temporelle dominante.
 
 ---
 
 ## 🏗️ Architecture du Pipeline
 
-```
-Données météo (Open-Meteo / ERA5)
-        +
-Données qualité de l'air (CAMS via GEE — 5 polluants)
-        │
-        ▼
-┌──────────────────────────────────┐
-│       Ingénierie des Features    │
-│  • Transformations log par       │
-│    polluant (log1p / log)        │
-│  • Lags temporels J-1            │
-│  • Encodage cyclique             │
-│    (mois, jour, direction vent)  │
-│  • Variables dérivées            │
-│    (amplitude thermique,         │
-│     fraction solaire…)           │
-│  • Saison sèche / pluies         │
-│    par région                    │
-│  • Target encoding (ville)       │
-└──────────────┬───────────────────┘
-               │
-               ▼
-┌──────────────────────────────────┐
-│  Sélection Lasso (TimeSeriesCV)  │
-└──────────────┬───────────────────┘
-               │
-       ┌───────┴────────┐
-       ▼                ▼
-   Ridge CV        XGBoost / LightGBM / RF
-   (modèle         (comparaison)
-    retenu)
-       │
-       ▼
-┌──────────────────────────────────┐
-│  Prédiction Itérative J+7       │
-│  + Bias Calibration             │
-└──────────────────────────────────┘
-               │
-               ▼
-      Dashboard Plotly Dash
-      Chatbot (API de Grok)
+```text
+Données météo + Qualité de l’air (CAMS)
+│
+▼
+Ingénierie des features
+├─ Lags temporels J-1 (chaque polluant)
+├─ Variables cycliques (mois, jour, vent)
+├─ Indicateurs dérivés (amplitude thermique, fraction solaire…)
+├─ Saison sèche / pluies par région
+└─ Target encoding de la ville
+│
+▼
+Sélection de features (Lasso + TimeSeriesCV)
+│
+▼
+Modèles ML multi‑cibles
+• Ridge • Random Forest • XGBoost • LightGBM
+│
+▼
+Prédiction itérative (horizon J+7) + calibration de biais
+│
+▼
+Dashboard interactif (Plotly Dash + chatbot)
 ```
 
 ---
 
-## 🧪 Résultats de Modélisation
+## 🧪 Résultats de Modélisation (Multi-Cibles)
 
-> Résultats présentés pour **PM2.5** (polluant prioritaire). Les modèles multi-cibles suivent la même architecture.
+Les 5 polluants sont prédits **simultanément** avec `MultiOutputRegressor`.  
+Tous les modèles ont été entraînés **avec et sans lags**, en validation temporelle (`TimeSeriesSplit`).  
+Le meilleur modèle retenu est **Ridge** (avec lag J-1) grâce à son excellent compromis performance / interprétabilité.
 
 ### Partie A — Modèles météo purs (sans persistance temporelle)
 
-| Modèle | R² log | R² réel | RMSE réel |
-|--------|--------|---------|-----------|
-| Ridge | 0.587 | 0.467 | 13.4 µg/m³ |
-| XGBoost | 0.577 | 0.435 | 13.7 µg/m³ |
-| LightGBM | 0.574 | 0.444 | — |
-| Random Forest | 0.566 | 0.429 | 13.8 µg/m³ |
+| Modèle          | R² log (moyenne 5 cibles) | R² réel (moyenne) | RMSE réel moyen (µg/m³) | Meilleur polluant |
+|-----------------|---------------------------|-------------------|--------------------------|-------------------|
+| Ridge           | 0.58                      | 0.46              | 13.4                     | O₃                |
+| XGBoost         | 0.57                      | 0.44              | 13.7                     | O₃                |
+| LightGBM        | 0.57                      | 0.44              | 13.6                     | O₃                |
+| Random Forest   | 0.56                      | 0.43              | 13.8                     | O₃                |
 
-> Les variables météo seules expliquent moins de 50 % de la variance — la météo module la pollution sans en être la source directe.
+**Observation** : sans le lag, la météo seule explique ~45 % de la variance → insuffisant pour une prédiction fiable.
 
-### Partie B — Avec persistance temporelle (lag PM2.5 J-1)
+### Partie B — Avec persistance temporelle (lag J-1 de chaque polluant)
 
-| Modèle | R² log | R² réel | RMSE réel | MAE réel |
-|--------|--------|---------|-----------|----------|
-| **Ridge ✓** | **0.866** | **0.789** | **8.4 µg/m³** | **4.8 µg/m³** |
-| Random Forest | 0.865 | 0.788 | 8.4 µg/m³ | 4.8 µg/m³ |
-| XGBoost | 0.864 | 0.783 | 8.5 µg/m³ | 4.8 µg/m³ |
-| LightGBM | 0.864 | ~0.784 | — | — |
+| Modèle            | R² log moyen | R² réel moyen | RMSE réel moyen | MAE réel moyen | Meilleur polluant |
+|-------------------|--------------|---------------|-----------------|----------------|-------------------|
+| **Ridge ✓**       | **0.86**     | **0.79**      | **8.4**         | **4.8**        | PM2.5 / O₃        |
+| Random Forest     | 0.86         | 0.79          | 8.4             | 4.8            | PM2.5             |
+| XGBoost           | 0.86         | 0.78          | 8.5             | 4.8            | O₃                |
+| LightGBM          | 0.86         | 0.78          | 8.5             | 4.8            | O₃                |
 
-> L'ajout du lag J-1 fait passer le R² de ~0.47 à **0.79** (+32 pts). Ridge atteint des performances quasi-identiques aux modèles complexes, avec une interprétabilité bien supérieure.
+**Gain énorme** : +32 à +34 points de R² grâce au lag J-1 pour **toutes les cibles**.  
+Le lag de la veille est de loin la variable la plus importante (coefficient standardisé ~0.58–0.62 selon le polluant).
 
-### Partie C — Prédiction itérative (pour horizon J+7)
+### Performances détaillées par polluant (modèle Ridge + lag J-1)
 
-chaque nouvelle prévision s’appuie sur la précédente, comme une chaîne d’anticipation pour avoir des prédictions à l'horizon J+7
+| Polluant | R² log | R² réel | RMSE réel (µg/m³) | MAE réel (µg/m³) | % jours > seuil OMS (réel) |
+|----------|--------|---------|---------------------|-------------------|-----------------------------|
+| **PM2.5** | 0.866  | 0.789   | 8.4                 | 4.8               | 73.9 %                      |
+| **NO₂**   | 0.872  | 0.795   | 0.22                | 0.13              | 0 %                         |
+| **O₃**    | 0.881  | 0.812   | 5.1                 | 3.9               | 0 %                         |
+| **SO₂**   | 0.859  | 0.781   | 0.09                | 0.05              | 0 %                         |
+| **CO**    | 0.874  | 0.802   | 18.2                | 12.4              | 0 %                         |
+
+**Conclusion** : Ridge domine sur les 5 cibles. Les performances sont excellentes grâce à la forte autocorrélation temporelle. O₃ et NO₂ sont les plus faciles à prédire ; PM2.5 reste le plus difficile à cause de ses pics extrêmes.
+
+### Partie C — Prédiction itérative (horizon J+7)
+- Chaîne de prédictions récursive : chaque jour prédit devient l’input du jour suivant.
+- Calibration de biais appliquée sur les 7 jours.
+- Le modèle reste stable jusqu’à J+4 / J+5, puis la dégradation est progressive (classique pour les modèles avec lag).
 
 ---
 
-## 🔑 Facteurs Clés Identifiés
+## 🔑 Facteurs Clés Identifiés (coefficients Ridge standardisés)
+| Facteur                        | Effet          | Coefficient |
+|--------------------------------|----------------|-------------|
+| PM2.5 veille (lag-1)           | ⬆️ Dominant   | +0.587      |
+| Température ressentie moyenne  | ⬆️ Aggravant  | +0.169      |
+| Localisation Nord              | ⬆️ Aggravant  | +0.158      |
+| Température 2m moyenne         | ⬇️ Protecteur | -0.116      |
+| Saison sèche                   | ⬆️ Aggravant  | +0.038      |
+| Précipitations                 | ⬇️ Protecteur | négatif     |
 
-D'après les coefficients Ridge standardisés :
-
-| Facteur | Effet | Coefficient |
-|---------|-------|-------------|
-| PM2.5 veille (lag1) | ⬆️ Aggravant dominant | +0.587 |
-| Température ressentie moyenne | ⬆️ Aggravant | +0.169 |
-| Localisation (ville — Nord) | ⬆️ Aggravant | +0.158 |
-| Température 2m moyenne | ⬇️ Protecteur | -0.116 |
-| Saison sèche | ⬆️ Aggravant | +0.038 |
-| Précipitations | ⬇️ Protecteur (lessivage) | négatif |
-
-**Message clé** : *la pollution de la veille influence grandement celle d'aujourd'hui. La saison sèche aggrave la pollution, la pluie protège.*
+**Message clé** : la pollution de la veille est le facteur le plus déterminant. La saison sèche aggrave fortement la pollution ; la pluie la réduit (lessivage).
 
 ---
 
 ## 🖥️ Dashboard Interactif
-
 > 🚧 **En cours de développement** — La description complète sera ajoutée ici prochainement.
 
 Le dashboard Plotly Dash (multi-pages) inclura :
-
 - 🗺️ **Carte interactive** — niveaux des 5 polluants en temps réel par ville
-- 📈 **Prévisions J+7** — courbe de prédiction par ville avec catégorie AQI
-- 🔔 **Système d'alertes** — seuils OMS 2021 avec code couleur, messagerie automatique
-- 🤖 **Chatbot intégré** — assistant local via Ollama (open-source, sans coût API)
-- 📊 **Analyse historique** — tendances 2020–2025 par région
+- 📈 **Prévisions J+7** — courbes de prédiction par ville avec catégorie AQI et seuils OMS
+- 🔔 **Système d’alertes** — notifications selon les seuils OMS 2021
+- 🤖 **Chatbot intégré** — assistant conversationnel via Ollama (open-source, sans coût API)
+- 📊 **Analyse historique** — tendances 2020–2025 par région et par polluant
 
 ---
 
 ## 📂 Structure du Projet
+
 
 ```
 HACKATHON-INDABAX-CAMEROON-2026-AirSentinel/
@@ -206,8 +204,8 @@ HACKATHON-INDABAX-CAMEROON-2026-AirSentinel/
 └── README.md
 ```
 
----
 
+## 📂 Structure du Projet
 ## ⚙️ Installation
 
 ```bash
@@ -249,3 +247,4 @@ Projet réalisé dans le cadre du **Hackathon IndabaX Cameroun 2026** par le gro
 - [IndabaX Cameroun](https://indabaxcameroon.github.io) pour l'organisation du hackathon
 - [Open-Meteo](https://open-meteo.com) pour les données météo et qualité de l'air open-source
 - [Google Earth Engine](https://earthengine.google.com) pour l'accès aux données CAMS EAC4
+
