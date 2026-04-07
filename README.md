@@ -18,7 +18,7 @@ Pour ouvrir le notebook de la modélisation, cliquer ici :
 
 ## 📌 Présentation
 
-**AirSentinel** est un système de prédiction de la qualité de l'air pour **40 villes camerounaises** couvrant les 10 régions administratives du pays. Le projet combine des données météorologiques quotidiennes, de l'ingénierie de features avancée et des modèles de machine learning pour produire des prévisions **multi-cibles** sur 5 polluants atmosphériques simultanément : **PM2.5, NO₂, O₃, SO₂ et CO**.
+**AirCam** est un système de prédiction de la qualité de l'air pour **40 villes camerounaises** couvrant les 10 régions administratives du pays. Le projet combine des données météorologiques quotidiennes, de l'ingénierie de features avancée et des modèles de machine learning pour produire des prévisions **multi-cibles** sur 5 polluants atmosphériques simultanément : **PM2.5, NO₂, O₃, SO₂ et CO**.
 
 Le Cameroun ne dispose pas d'un réseau dense de stations de mesure de la qualité de l'air. Ce projet propose une approche basée sur des **données satellitaires (CAMS / Copernicus)** et des **prévisions météo open-source (Open-Meteo)** pour combler ce vide et informer les populations et décideurs sur les risques de pollution.
 
