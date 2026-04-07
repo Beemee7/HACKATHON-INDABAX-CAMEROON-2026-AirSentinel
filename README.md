@@ -2,7 +2,7 @@
 Prédiction de la qualité de l'air à partir de données météorologiques dans le cadre du hackathon IndabaX Cameroon 2026
 
 Pour ouvrir le notebook de la modélisation, cliquer ici :
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Beemee7/HACKATHON-INDABAX-CAMEROON-2026-AirSentinel/blob/main/notebooks/AirSentinel_notebook.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Beemee7/HACKATHON-INDABAX-CAMEROON-2026-AirSentinel/blob/main/notebooks/Indabax_modèles.ipynb)
 
 # 🌬️ AirSentinel — Prédiction Multi-Cibles de la Qualité de l'Air au Cameroun
 
