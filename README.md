@@ -158,7 +158,7 @@ D'après les coefficients Ridge standardisés :
 | Saison sèche | ⬆️ Aggravant | +0.038 |
 | Précipitations | ⬇️ Protecteur (lessivage) | négatif |
 
-**Message clé** : *la pollution de la veille domine, la saison sèche aggrave, la pluie protège.*
+**Message clé** : *la pollution de la veille influence grandement celle d'aujourd'hui. La saison sèche aggrave la pollution, la pluie protège.*
 
 ---
 
@@ -170,7 +170,7 @@ Le dashboard Plotly Dash (multi-pages) inclura :
 
 - 🗺️ **Carte interactive** — niveaux des 5 polluants en temps réel par ville
 - 📈 **Prévisions J+7** — courbe de prédiction par ville avec catégorie AQI
-- 🔔 **Système d'alertes** — seuils OMS 2021 avec code couleur
+- 🔔 **Système d'alertes** — seuils OMS 2021 avec code couleur, messagerie automatique
 - 🤖 **Chatbot intégré** — assistant local via Ollama (open-source, sans coût API)
 - 📊 **Analyse historique** — tendances 2020–2025 par région
 
