@@ -167,41 +167,6 @@ Le dashboard Plotly Dash (multi-pages) inclura :
 
 ---
 
-## 📂 Structure du Projet
-
-
-```
-HACKATHON-INDABAX-CAMEROON-2026-AirSentinel/
-│
-├── data/
-│   ├── Dataset_complet_Meteo.csv            # Météo journalière 40 villes
-│   └── donnes_qualite_air_journalier.csv    # 5 polluants CAMS (GEE)
-│
-├── notebooks/
-│   └── AirSentinel_notebook.ipynb           # Pipeline complet (EDA + modélisation)
-│
-├── models/
-│   ├── ridge_model.joblib                   # Modèle Ridge entraîné
-│   ├── target_encoder.joblib                # Encodeur ville
-│   ├── scaler.joblib                        # StandardScaler
-│   └── selected_features_lasso.json        # Features sélectionnées
-│
-├── dashboard/                              
-│   ├── app.py
-│   ├── pages/
-│   │   ├── carte.py
-│   │   ├── previsions.py
-│   │   ├── historique.py
-│   │   └── chatbot.py
-│   └── assets/
-│
-├── scripts/
-│   ├── download_pm25_openmeteo.py           # Téléchargement historique
-│   └── openmeteo_forecast_j7.py            # Pipeline prédiction J+7
-│
-├── requirements.txt
-└── README.md
-```
 
 
 
