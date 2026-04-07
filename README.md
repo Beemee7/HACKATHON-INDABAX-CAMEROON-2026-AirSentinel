@@ -158,7 +158,6 @@ Tous les modèles ont été entraînés **avec et sans lags**, en validation tem
 ---
 
 ## 🖥️ Dashboard Interactif
-> 🚧 **En cours de développement** — La description complète sera ajoutée ici prochainement.
 
 Le dashboard Plotly Dash (multi-pages) inclura :
 - 🗺️ **Carte interactive** — niveaux des 5 polluants en temps réel par ville
