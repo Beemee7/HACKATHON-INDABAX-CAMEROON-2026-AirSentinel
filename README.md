@@ -134,14 +134,9 @@ Données qualité de l'air (CAMS via GEE — 5 polluants)
 
 > L'ajout du lag J-1 fait passer le R² de ~0.47 à **0.79** (+32 pts). Ridge atteint des performances quasi-identiques aux modèles complexes, avec une interprétabilité bien supérieure.
 
-### Partie C — Prédiction itérative (simulation production réelle J+7)
+### Partie C — Prédiction itérative (pour horizon J+7)
 
-| Configuration | R² log | RMSE log |
-|---------------|--------|----------|
-| Itératif brut | 0.606 | 0.393 |
-| **+ Bias calibration** | **0.627** | **0.382** |
-
-> En production, le modèle réinjecte ses propres prédictions comme lag pour les jours suivants. La **bias calibration** corrige la surestimation systématique (+0.017 log) et améliore le R² de +2 points.
+chaque nouvelle prévision s’appuie sur la précédente, comme une chaîne d’anticipation pour avoir des prédictions à l'horizon J+7
 
 ---
 
