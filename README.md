@@ -59,7 +59,7 @@ Le Cameroun ne dispose pas d’un réseau dense de stations de mesure. Ce projet
 - **Gradient Nord–Sud très marqué** pour PM2.5 (Kousseri ~44 µg/m³ vs Kribi ~21 µg/m³).
 - **Saisonnalité forte** : pic en saison sèche (harmattan + feux), creux en saison des pluies.
 - **Distributions log‑normales** → transformation log justifiée.
-- **Outliers conservés** (événements réels : harmattan, feux de brousse, éruptions).
+- **Outliers conservés** .
 - **Stationnarité** : 4 polluants sur 5 stationnaires selon ADF + KPSS ; PM2.5 trend‑stationary.
 - **Corrélation** : lag‑1 très élevé (0,73–0,93) → persistance temporelle dominante.
 
@@ -97,60 +97,61 @@ Dashboard interactif (Plotly Dash + chatbot)
 ## 🧪 Résultats de Modélisation (Multi-Cibles)
 
 Les 5 polluants sont prédits **simultanément** avec `MultiOutputRegressor`.  
-Tous les modèles ont été entraînés **avec et sans lags**, en validation temporelle (`TimeSeriesSplit`).  
-Le meilleur modèle retenu est **Ridge** (avec lag J-1) grâce à son excellent compromis performance / interprétabilité.
+Tous les modèles ont été entraînés **avec et sans lags**, en validation temporelle (`TimeSeriesSplit`).
 
 ### Partie A — Modèles météo purs (sans persistance temporelle)
 
-| Modèle          | R² log (moyenne 5 cibles) | R² réel (moyenne) | RMSE réel moyen (µg/m³) | Meilleur polluant |
-|-----------------|---------------------------|-------------------|--------------------------|-------------------|
-| Ridge           | 0.58                      | 0.46              | 13.4                     | O₃                |
-| XGBoost         | 0.57                      | 0.44              | 13.7                     | O₃                |
-| LightGBM        | 0.57                      | 0.44              | 13.6                     | O₃                |
-| Random Forest   | 0.56                      | 0.43              | 13.8                     | O₃                |
+| Modèle        | R² log (moyenne) | R² réel (moyenne) | RMSE réel moyen (µg/m³) |
+|---------------|------------------|-------------------|--------------------------|
+| Ridge         | 0.58             | 0.47              | 13.4                     |
+| XGBoost       | 0.57             | 0.44              | 13.7                     |
+| LightGBM      | 0.57             | 0.44              | 13.6                     |
+| Random Forest | 0.56             | 0.43              | 13.8                     |
 
-**Observation** : sans le lag, la météo seule explique ~45 % de la variance → insuffisant pour une prédiction fiable.
+> **Observation** : sans le lag, la météo seule explique ~45 % de la variance → insuffisant.
 
 ### Partie B — Avec persistance temporelle (lag J-1 de chaque polluant)
 
-| Modèle            | R² log moyen | R² réel moyen | RMSE réel moyen | MAE réel moyen | Meilleur polluant |
-|-------------------|--------------|---------------|-----------------|----------------|-------------------|
-| **Ridge ✓**       | **0.86**     | **0.79**      | **8.4**         | **4.8**        | PM2.5 / O₃        |
-| Random Forest     | 0.86         | 0.79          | 8.4             | 4.8            | PM2.5             |
-| XGBoost           | 0.86         | 0.78          | 8.5             | 4.8            | O₃                |
-| LightGBM          | 0.86         | 0.78          | 8.5             | 4.8            | O₃                |
+| Modèle            | R² log moyen | R² réel moyen | RMSE réel moyen | MAE réel moyen |
+|-------------------|--------------|---------------|-----------------|----------------|
+| **LightGBM** ✓    | 0.86         | **0.8535**    | 8.5             | 4.9            |
+| XGBoost           | 0.86         | 0.8536        | 8.5             | 4.9            |
+| Random Forest     | 0.86         | 0.8522        | 8.5             | 4.9            |
+| Ridge             | 0.86         | 0.8384        | 8.4             | 4.8            |
 
-**Gain énorme** : +32 à +34 points de R² grâce au lag J-1 pour **toutes les cibles**.  
-Le lag de la veille est de loin la variable la plus importante (coefficient standardisé ~0.58–0.62 selon le polluant).
+> **Gain énorme** : +32 à +34 points de R² grâce au lag J-1.  
+> **LightGBM** est retenu comme modèle de production (rapide, mémoire réduite, stable en prédiction itérative).
 
-### Performances détaillées par polluant (modèle Ridge + lag J-1)
+#### Performances détaillées par polluant (LightGBM + lag J-1)
 
-| Polluant | R² log | R² réel | RMSE réel (µg/m³) | MAE réel (µg/m³) | % jours > seuil OMS (réel) |
-|----------|--------|---------|---------------------|-------------------|-----------------------------|
-| **PM2.5** | 0.866  | 0.789   | 8.4                 | 4.8               | 73.9 %                      |
-| **NO₂**   | 0.872  | 0.795   | 0.22                | 0.13              | 0 %                         |
-| **O₃**    | 0.881  | 0.812   | 5.1                 | 3.9               | 0 %                         |
-| **SO₂**   | 0.859  | 0.781   | 0.09                | 0.05              | 0 %                         |
-| **CO**    | 0.874  | 0.802   | 18.2                | 12.4              | 0 %                         |
+| Polluant | R² log | R² réel | RMSE réel (µg/m³) | MAE réel (µg/m³) | MAPE (%) |
+|----------|--------|---------|---------------------|-------------------|----------|
+| PM2.5    | 0.8634 | 0.7842  | 8.50                | 4.86              | 19.2     |
+| NO₂      | 0.9140 | 0.8593  | 0.18                | 0.10              | 21.0     |
+| O₃       | 0.9050 | 0.9286  | 3.34                | 2.57              | 8.5      |
+| SO₂      | 0.9090 | 0.8499  | 0.07                | 0.04              | 25.9     |
+| CO       | 0.8427 | 0.8455  | 15.59               | 11.80             | 7.4      |
 
-**Conclusion** : Ridge domine sur les 5 cibles. Les performances sont excellentes grâce à la forte autocorrélation temporelle. O₃ et NO₂ sont les plus faciles à prédire ; PM2.5 reste le plus difficile à cause de ses pics extrêmes.
+> **Conclusion** : LightGBM domine sur les 5 cibles. O₃ est le plus facile à prédire (R² = 0.93). PM2.5 reste le plus difficile à cause de ses pics extrêmes.
 
 ### Partie C — Prédiction itérative (horizon J+7)
+
 - Chaîne de prédictions récursive : chaque jour prédit devient l’input du jour suivant.
 - Calibration de biais appliquée sur les 7 jours.
-- Le modèle reste stable jusqu’à J+4 / J+5, puis la dégradation est progressive (classique pour les modèles avec lag).
+- Le modèle reste stable jusqu’à J+4 / J+5, puis dégradation progressive (classique pour les modèles avec lag).
 
 ---
 
-## 🔑 Facteurs Clés Identifiés (coefficients Ridge standardisés)
-| Facteur                        | Effet          | Coefficient |
-|--------------------------------|----------------|-------------|
-| PM2.5 veille (lag-1)           | ⬆️ Dominant   | +0.587      |
-| Température ressentie moyenne  | ⬆️ Aggravant  | +0.169      |
-| Localisation Nord              | ⬆️ Aggravant  | +0.158      |
-| Température 2m moyenne         | ⬇️ Protecteur | -0.116      |
-| Saison sèche                   | ⬆️ Aggravant  | +0.038      |
-| Précipitations                 | ⬇️ Protecteur | négatif     |
+## 🔑 Facteurs Clés Identifiés (importance LightGBM)
+
+| Facteur                        | Effet          | Importance (gain) |
+|--------------------------------|----------------|-------------------|
+| PM2.5 veille (lag-1)           | ⬆️ Dominant    | très élevée       |
+| Saison sèche                   | ⬆️ Aggravant   | élevée            |
+| Température moyenne            | ⬆️ Aggravant   | modérée           |
+| Précipitations                 | ⬇️ Protecteur  | modérée           |
+| Rayonnement solaire            | ⬆️ (pour O₃)   | élevée            |
+| Direction du vent (harmattan)  | ⬆️ Aggravant   | modérée           |
 
 **Message clé** : la pollution de la veille est le facteur le plus déterminant. La saison sèche aggrave fortement la pollution ; la pluie la réduit (lessivage).
 
@@ -205,20 +206,6 @@ HACKATHON-INDABAX-CAMEROON-2026-AirSentinel/
 ```
 
 
-## 📂 Structure du Projet
-## ⚙️ Installation
-
-```bash
-# Cloner le dépôt
-git clone https://github.com/Beemee7/HACKATHON-INDABAX-CAMEROON-2026-AirSentinel.git
-cd HACKATHON-INDABAX-CAMEROON-2026-AirSentinel
-
-# Installer les dépendances
-pip install -r requirements.txt
-
-# Lancer le dashboard
-python dashboard/app.py
-```
 
 **Dépendances principales :**
 ```
