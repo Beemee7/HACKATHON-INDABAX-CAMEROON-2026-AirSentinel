@@ -103,7 +103,7 @@ Données qualité de l'air (CAMS via GEE — 5 polluants)
                │
                ▼
       Dashboard Plotly Dash
-      Chatbot (Ollama local)
+      Chatbot (API de Grok)
 ```
 
 ---
