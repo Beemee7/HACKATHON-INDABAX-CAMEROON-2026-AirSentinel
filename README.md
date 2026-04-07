@@ -103,21 +103,21 @@ Tous les modèles ont été entraînés **avec et sans lags**, en validation tem
 
 | Modèle        | R² log (moyenne) | R² réel (moyenne) | RMSE réel moyen (µg/m³) |
 |---------------|------------------|-------------------|--------------------------|
-| Ridge         | 0.58             | 0.47              | 13.4                     |
-| XGBoost       | 0.57             | 0.44              | 13.7                     |
-| LightGBM      | 0.57             | 0.44              | 13.6                     |
-| Random Forest | 0.56             | 0.43              | 13.8                     |
+| Ridge         | 0.60             | 0.47              | 9.58                     |
+| XGBoost       | 0.73             | 0.67              | 9.41                     |
+| LightGBM      | 0.73             | 0.67              | 9.38                     |
+| Random Forest | 0.72             | 0.67              | 9.40                     |
 
 > **Observation** : sans le lag, la météo seule explique ~45 % de la variance → insuffisant.
 
 ### Partie B — Avec persistance temporelle (lag J-1 de chaque polluant)
 
-| Modèle            | R² log moyen | R² réel moyen | RMSE réel moyen | MAE réel moyen |
-|-------------------|--------------|---------------|-----------------|----------------|
-| **LightGBM** ✓    | 0.86         | **0.8535**    | 8.5             | 4.9            |
-| XGBoost           | 0.86         | 0.8536        | 8.5             | 4.9            |
-| Random Forest     | 0.86         | 0.8522        | 8.5             | 4.9            |
-| Ridge             | 0.86         | 0.8384        | 8.4             | 4.8            |
+| Modèle            | R² log moyen | R² réel moyen | RMSE réel moyen (µg/m³) | MAE réel moyen (µg/m³) |
+|-------------------|--------------|---------------|-------------------------|------------------------|
+| **LightGBM** ✓    | 0.86         | **0.8535**    | 5.54                    | 3.88                   |
+| XGBoost           | 0.86         | 0.8536        | 5.54                    | 3.88                   |
+| Random Forest     | 0.86         | 0.8522        | 5.54                    | 3.88                   |
+| Ridge             | 0.86         | 0.8384        | 5.48                    | 3.83                   |
 
 > **Gain énorme** : +32 à +34 points de R² grâce au lag J-1.  
 > **LightGBM** est retenu comme modèle de production (rapide, mémoire réduite, stable en prédiction itérative).
@@ -139,7 +139,6 @@ Tous les modèles ont été entraînés **avec et sans lags**, en validation tem
 - Chaîne de prédictions récursive : chaque jour prédit devient l’input du jour suivant.
 - Calibration de biais appliquée sur les 7 jours.
 - Le modèle reste stable jusqu’à J+4 / J+5, puis dégradation progressive (classique pour les modèles avec lag).
-
 ---
 
 ## 🔑 Facteurs Clés Identifiés (importance LightGBM)
