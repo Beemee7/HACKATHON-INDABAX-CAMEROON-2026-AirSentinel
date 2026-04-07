@@ -1,10 +1,10 @@
 # HACKATHON-INDABAX-CAMEROON-2026-AirSentinel
-Prédiction qualité de l'air à partir de données météorologiques dans le cadre du hackathon IndabaX Cameroon 2026
+Prédiction de la qualité de l'air à partir de données météorologiques dans le cadre du hackathon IndabaX Cameroon 2026
 
-Pour ouvrir le notebook de la modélisation, cliquer ici
+Pour ouvrir le notebook de la modélisation, cliquer ici :
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Beemee7/HACKATHON-INDABAX-CAMEROON-2026-AirSentinel/blob/main/notebooks/AirSentinel_notebook.ipynb)
 
-# 🌍 AirCam AI — Prédiction de la Qualité de l'Air au Cameroun
+# 🌬️ AirSentinel — Prédiction Multi-Cibles de la Qualité de l'Air au Cameroun
 
 > **IndabaX Cameroun 2026** · Thème : *L'IA au service de la résilience climatique et sanitaire au Cameroun*
 
@@ -18,9 +18,11 @@ Pour ouvrir le notebook de la modélisation, cliquer ici
 
 ## 📌 Présentation
 
-**AirCam AI** est un système de prédiction de la concentration en PM2.5 (particules fines) pour **40 villes camerounaises** couvrant les 10 régions administratives du pays. Le projet combine des données météorologiques quotidiennes, de l'ingénierie de features avancée et des modèles de machine learning pour produire des prévisions à **7 jours**, sans nécessiter de capteurs terrain.
+**AirSentinel** est un système de prédiction de la qualité de l'air pour **40 villes camerounaises** couvrant les 10 régions administratives du pays. Le projet combine des données météorologiques quotidiennes, de l'ingénierie de features avancée et des modèles de machine learning pour produire des prévisions **multi-cibles** sur 5 polluants atmosphériques simultanément : **PM2.5, NO₂, O₃, SO₂ et CO**.
 
 Le Cameroun ne dispose pas d'un réseau dense de stations de mesure de la qualité de l'air. Ce projet propose une approche basée sur des **données satellitaires (CAMS / Copernicus)** et des **prévisions météo open-source (Open-Meteo)** pour combler ce vide et informer les populations et décideurs sur les risques de pollution.
+
+> ⚠️ **PM2.5 reste le polluant le plus préoccupant** : 73,9 % des jours dépassent le seuil OMS (15 µg/m³), avec des pics atteignant 383 µg/m³ lors d'épisodes d'harmattan et de feux de brousse.
 
 ---
 
@@ -29,12 +31,33 @@ Le Cameroun ne dispose pas d'un réseau dense de stations de mesure de la qualit
 | Source | Description | Période |
 |--------|-------------|---------|
 | [Open-Meteo](https://open-meteo.com) / ERA5 | Variables météo journalières (température, vent, pluie, rayonnement…) | 2020–2025 |
-| [Google Earth Engine](https://earthengine.google.com) — CAMS EAC4 | PM2.5 journalier par ville (réanalyse atmosphérique Copernicus) | 2020–2025 |
-| [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) | PM2.5 temps réel + prévisions (production) | Aujourd'hui → J+7 |
+| [Google Earth Engine](https://earthengine.google.com) — CAMS EAC4 | PM2.5, NO₂, O₃, SO₂, CO journaliers par ville (réanalyse Copernicus) | 2020–2025 |
+| [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) | Qualité de l'air temps réel + prévisions (production) | Aujourd'hui → J+7 |
 
 - **40 villes** · 4 par région · 10 régions administratives
-- **~87 000 observations** journalières
+- **~87 200 observations** journalières
 - **Période** : 1er janvier 2020 → décembre 2025
+
+### Variables cibles
+
+| Polluant | Unité | Conversion | Observations clés |
+|----------|-------|------------|-------------------|
+| **PM2.5** | µg/m³ | — | Moyenne 31 µg/m³ · max 383 µg/m³ · 73,9 % des jours > seuil OMS |
+| **NO₂** | µg/m³ | kg/m³ × 10⁹ | Faible globalement · Yaoundé outlier (~1,46 µg/m³) |
+| **O₃** | µg/m³ | kg/m³ × 10⁹ | Modéré · gradient inversé (Nord > Sud) · sous seuil OMS |
+| **SO₂** | µg/m³ | kg/m³ × 10⁹ | Très faible · Limbe outlier (volcan + SONARA) |
+| **CO** | µg/m³ | kg/m³ × 10⁹ | Dans les normes · combustion domestique diffuse |
+
+---
+
+## 🔍 Analyse Exploratoire — Points Clés
+
+- **Gradient Nord–Sud pour PM2.5** : Kousseri (~44 µg/m³) vs Kribi (~21 µg/m³) — influence déterminante de l'harmattan
+- **Saisonnalité marquée** : pic en saison sèche (feux + harmattan), creux en saison des pluies (lessivage atmosphérique)
+- **Mémoire longue** : autocorrélation lag-1 de 0,73 à 0,93 selon le polluant — la pollution de la veille domine le signal
+- **Distributions log-normales** : transformation logarithmique appliquée à tous les polluants avant modélisation
+- **Aucune valeur manquante** dans le dataset fusionné — aucune imputation nécessaire
+- **Outliers conservés** : ils correspondent à des épisodes de pollution réels (harmattan, éruptions, feux de brousse)
 
 ---
 
@@ -43,48 +66,51 @@ Le Cameroun ne dispose pas d'un réseau dense de stations de mesure de la qualit
 ```
 Données météo (Open-Meteo / ERA5)
         +
-Données PM2.5 (CAMS via GEE)
+Données qualité de l'air (CAMS via GEE — 5 polluants)
         │
         ▼
-┌─────────────────────────────┐
-│  Ingénierie des Features    │
-│  • Encodage cyclique        │
-│    (mois, jour, vent)       │
-│  • Variables dérivées       │
-│    (amplitude thermique,    │
-│     fraction solaire…)      │
-│  • Saison sèche / pluies    │
-│    par région               │
-│  • Lag PM2.5 (J-1)         │
-│  • Target encoding (ville)  │
-└────────────┬────────────────┘
-             │
-             ▼
-┌─────────────────────────────┐
-│  Sélection Lasso (TimeSeriesCV) │
-│  31 → 25 features retenues  │
-└────────────┬────────────────┘
-             │
-      ┌──────┴──────┐
-      ▼             ▼
-  Ridge CV      XGBoost / LightGBM / RF
-  (modèle       (comparaison)
-   retenu)
-      │
-      ▼
-┌─────────────────────────────┐
-│  Prédiction Itérative J+7  │
-│  + Bias Calibration        │
-└─────────────────────────────┘
-             │
-             ▼
-     Dashboard Dash (Plotly)
-     Chatbot (Ollama local)
+┌──────────────────────────────────┐
+│       Ingénierie des Features    │
+│  • Transformations log par       │
+│    polluant (log1p / log)        │
+│  • Lags temporels J-1            │
+│  • Encodage cyclique             │
+│    (mois, jour, direction vent)  │
+│  • Variables dérivées            │
+│    (amplitude thermique,         │
+│     fraction solaire…)           │
+│  • Saison sèche / pluies         │
+│    par région                    │
+│  • Target encoding (ville)       │
+└──────────────┬───────────────────┘
+               │
+               ▼
+┌──────────────────────────────────┐
+│  Sélection Lasso (TimeSeriesCV)  │
+└──────────────┬───────────────────┘
+               │
+       ┌───────┴────────┐
+       ▼                ▼
+   Ridge CV        XGBoost / LightGBM / RF
+   (modèle         (comparaison)
+    retenu)
+       │
+       ▼
+┌──────────────────────────────────┐
+│  Prédiction Itérative J+7       │
+│  + Bias Calibration             │
+└──────────────────────────────────┘
+               │
+               ▼
+      Dashboard Plotly Dash
+      Chatbot (Ollama local)
 ```
 
 ---
 
-## 🧪 Résultats
+## 🧪 Résultats de Modélisation
+
+> Résultats présentés pour **PM2.5** (polluant prioritaire). Les modèles multi-cibles suivent la même architecture.
 
 ### Partie A — Modèles météo purs (sans persistance temporelle)
 
@@ -95,7 +121,7 @@ Données PM2.5 (CAMS via GEE)
 | LightGBM | 0.574 | 0.444 | — |
 | Random Forest | 0.566 | 0.429 | 13.8 µg/m³ |
 
-> Les variables météo seules expliquent moins de 50% de la variance. La météo module la pollution sans en être la source directe.
+> Les variables météo seules expliquent moins de 50 % de la variance — la météo module la pollution sans en être la source directe.
 
 ### Partie B — Avec persistance temporelle (lag PM2.5 J-1)
 
@@ -106,20 +132,20 @@ Données PM2.5 (CAMS via GEE)
 | XGBoost | 0.864 | 0.783 | 8.5 µg/m³ | 4.8 µg/m³ |
 | LightGBM | 0.864 | ~0.784 | — | — |
 
-> L'autocorrélation moyenne des PM2.5 est de **0.90** — la pollution de la veille domine le signal. Ridge atteint des performances quasi-identiques aux modèles complexes, avec une interprétabilité bien supérieure.
+> L'ajout du lag J-1 fait passer le R² de ~0.47 à **0.79** (+32 pts). Ridge atteint des performances quasi-identiques aux modèles complexes, avec une interprétabilité bien supérieure.
 
-### Partie C — Prédiction itérative (simulation production réelle)
+### Partie C — Prédiction itérative (simulation production réelle J+7)
 
 | Configuration | R² log | RMSE log |
 |---------------|--------|----------|
 | Itératif brut | 0.606 | 0.393 |
 | **+ Bias calibration** | **0.627** | **0.382** |
 
-> En production, le modèle ne connaît pas les vraies valeurs futures de PM2.5. Chaque prédiction est réinjectée comme lag pour le jour suivant. La **bias calibration** corrige la surestimation systématique (+0.017 log) et améliore le R² de +2 points.
+> En production, le modèle réinjecte ses propres prédictions comme lag pour les jours suivants. La **bias calibration** corrige la surestimation systématique (+0.017 log) et améliore le R² de +2 points.
 
 ---
 
-## 🔍 Facteurs clés identifiés
+## 🔑 Facteurs Clés Identifiés
 
 D'après les coefficients Ridge standardisés :
 
@@ -127,20 +153,22 @@ D'après les coefficients Ridge standardisés :
 |---------|-------|-------------|
 | PM2.5 veille (lag1) | ⬆️ Aggravant dominant | +0.587 |
 | Température ressentie moyenne | ⬆️ Aggravant | +0.169 |
-| Localisation (ville) | ⬆️ Aggravant (Nord) | +0.158 |
+| Localisation (ville — Nord) | ⬆️ Aggravant | +0.158 |
 | Température 2m moyenne | ⬇️ Protecteur | -0.116 |
 | Saison sèche | ⬆️ Aggravant | +0.038 |
 | Précipitations | ⬇️ Protecteur (lessivage) | négatif |
 
-**Message clé** : *la pollution de la veille domine, la saison sèche aggrave, la pluie améliore la qualité de l'air.*
+**Message clé** : *la pollution de la veille domine, la saison sèche aggrave, la pluie protège.*
 
 ---
 
-## 🚀 Fonctionnalités du Dashboard
+## 🖥️ Dashboard Interactif
 
-Le dashboard Plotly Dash (multi-pages) inclut :
+> 🚧 **En cours de développement** — La description complète sera ajoutée ici prochainement.
 
-- 🗺️ **Carte interactive** — niveaux PM2.5 en temps réel par ville
+Le dashboard Plotly Dash (multi-pages) inclura :
+
+- 🗺️ **Carte interactive** — niveaux des 5 polluants en temps réel par ville
 - 📈 **Prévisions J+7** — courbe de prédiction par ville avec catégorie AQI
 - 🔔 **Système d'alertes** — seuils OMS 2021 avec code couleur
 - 🤖 **Chatbot intégré** — assistant local via Ollama (open-source, sans coût API)
@@ -148,29 +176,26 @@ Le dashboard Plotly Dash (multi-pages) inclut :
 
 ---
 
-## 📂 Structure du projet
+## 📂 Structure du Projet
 
 ```
 HACKATHON-INDABAX-CAMEROON-2026-AirSentinel/
 │
 ├── data/
-│   ├── Dataset_complet_Meteo.csv       # Météo journalière 40 villes
-│   └── donnes_qualite_air_journalier/  # PM2.5 CAMS (Google Earth Engine)
+│   ├── Dataset_complet_Meteo.csv            # Météo journalière 40 villes
+│   └── donnes_qualite_air_journalier.csv    # 5 polluants CAMS (GEE)
 │
 ├── notebooks/
-│   └── IndabaX_Modelisation_github.ipynb  # Pipeline ML
-
-├── notebooks/
-│   └── IndabaX_Modelisation.ipynb      # Pipeline ML complet
+│   └── AirSentinel_notebook.ipynb           # Pipeline complet (EDA + modélisation)
 │
 ├── models/
-│   ├── ridge_model.joblib              # Modèle Ridge entraîné
-│   ├── target_encoder.joblib           # Encodeur ville
-│   ├── scaler.joblib                   # StandardScaler
-│   └── selected_features_lasso.json   # Features sélectionnées
+│   ├── ridge_model.joblib                   # Modèle Ridge entraîné
+│   ├── target_encoder.joblib                # Encodeur ville
+│   ├── scaler.joblib                        # StandardScaler
+│   └── selected_features_lasso.json        # Features sélectionnées
 │
-├── dashboard/
-│   ├── app.py                          # App Dash multi-pages
+├── dashboard/                              
+│   ├── app.py
 │   ├── pages/
 │   │   ├── carte.py
 │   │   ├── previsions.py
@@ -179,8 +204,8 @@ HACKATHON-INDABAX-CAMEROON-2026-AirSentinel/
 │   └── assets/
 │
 ├── scripts/
-│   ├── download_pm25_openmeteo.py      # Téléchargement PM2.5 historique
-│   └── openmeteo_forecast_j7.py       # Pipeline prédiction J+7
+│   ├── download_pm25_openmeteo.py           # Téléchargement historique
+│   └── openmeteo_forecast_j7.py            # Pipeline prédiction J+7
 │
 ├── requirements.txt
 └── README.md
@@ -205,40 +230,22 @@ python dashboard/app.py
 **Dépendances principales :**
 ```
 pandas, numpy, scikit-learn, xgboost, lightgbm
-category_encoders, joblib
-dash, plotly
-requests, openmeteo-requests
-ollama
-```
-
----
-
-## 🗓️ Données Open-Meteo en production
-
-Le script `scripts/download_pm25_openmeteo.py` télécharge les PM2.5 historiques (2022 → aujourd'hui) pour les 40 villes via l'API gratuite CAMS d'Open-Meteo.
-
-```python
-# Téléchargement complet (~3 min pour 40 villes)
-from scripts.download_pm25_openmeteo import download_all_cities
-df = download_all_cities()
-# → pm25_openmeteo_2020_today.csv (~87 000 lignes)
+statsmodels, pmdarima, category_encoders, joblib
+dash, plotly, requests, openmeteo-requests, ollama
 ```
 
 ---
 
 ## 👥 Équipe
 
-Projet réalisé dans le cadre du **Hackathon IndabaX Cameroun 2026** par le groupe **AirSentinel** coonstitué de:
+Projet réalisé dans le cadre du **Hackathon IndabaX Cameroun 2026** par le groupe **AirSentinel** :
 
 | Nom | Responsabilité |
-|------|---------------|
-| Mlle BOUSA'A MERAWA| Modélisation, feature engineering, prédiction itérative(chef de groupe) |
-| Mlle MATCHIM KOUOKAM Pierrette| Modélisation, feature engineering, prédiction itérative|
-| M. SOKOUTCHOP SOKOUDJOU Divan Bryan| Frontend Dash, visualisations, chatbot |
+|-----|----------------|
+| Mlle BOUSA'A MERAWA *(Chef de groupe)* | Modélisation, feature engineering, prédiction itérative |
+| Mlle MATCHIM KOUOKAM Pierrette | Modélisation, feature engineering, prédiction itérative |
+| M. SOKOUTCHOP SOKOUDJOU Divan Bryan | Frontend Dash, visualisations, chatbot |
 | M. MBA-NZE Stéphane | Frontend Dash, visualisations, chatbot |
-
----
-
 
 ---
 
